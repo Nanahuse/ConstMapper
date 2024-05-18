@@ -55,6 +55,25 @@ TEST(TestConstMapper, to_index) {
   }
 }
 
+TEST(TestConstMapper, pattern) {
+  for (auto i = 0; i < 4; ++i) {
+    auto string = "value_" + std::to_string(i);
+
+    auto value_str = map.pattern_to<std::string_view, int, std::uint8_t>(-i, i);
+
+    EXPECT_EQ(value_str, string);
+  }
+
+  try {
+    map.pattern_to<std::string_view, int, std::uint8_t>(-1, 0);
+    EXPECT_TRUE(false);
+  } catch (const std::out_of_range& e) {
+    // expected here
+  } catch (const std::exception& e) {
+    EXPECT_TRUE(false);
+  }
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

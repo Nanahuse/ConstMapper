@@ -27,7 +27,8 @@
 #include <tuple>
 #include <type_traits>
 
-namespace {  // template magic for get index of tuple types
+namespace {
+// template magic for get index of tuple types
 template <typename T, typename Tuple>
 struct tuple_index;
 
@@ -44,6 +45,7 @@ struct tuple_index<T, std::tuple<U, Types...>> {
 
 template <typename T, typename... Types>
 inline constexpr auto tuple_index_v = tuple_index<T, Types...>::value;
+
 }  // namespace
 
 namespace const_mapper {
@@ -74,7 +76,28 @@ class ConstMapper {
     return to<i_to, i_from>(key);
   }
 
+  template <class To, class... Keys>
+  constexpr To pattern_to(const Keys &...keys) const {
+    for (const auto &tuple : map_data_) {
+      if (check_pattern(tuple, keys...)) {
+        return std::get<To>(tuple);
+      }
+    }
+    throw std::out_of_range("key not found.");
+  }
+
  private:
   std::array<Tuple, N> map_data_;
+
+  template <class Key, class... Keys>
+  constexpr bool check_pattern(const Tuple &tuple, const Key &key,
+                               const Keys &...keys) const {
+    return (std::get<Key>(tuple) == key) && check_pattern(tuple, keys...);
+  }
+
+  template <class Key>
+  constexpr bool check_pattern(const Tuple &tuple, const Key &key) const {
+    return (std::get<Key>(tuple) == key);
+  }
 };
 }  // namespace const_mapper
