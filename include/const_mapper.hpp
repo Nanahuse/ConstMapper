@@ -27,37 +27,54 @@
 #include <tuple>
 #include <type_traits>
 
+namespace {  // template magic for get index of tuple types
+template <typename T, typename Tuple>
+struct tuple_index;
+
+template <typename T, typename... Types>
+struct tuple_index<T, std::tuple<T, Types...>> {
+  static constexpr std::size_t value = 0;
+};
+
+template <typename T, typename U, typename... Types>
+struct tuple_index<T, std::tuple<U, Types...>> {
+  static constexpr std::size_t value =
+      1 + tuple_index<T, std::tuple<Types...>>::value;
+};
+
+template <typename T, typename... Types>
+inline constexpr auto tuple_index_v = tuple_index<T, Types...>::value;
+}  // namespace
+
 namespace const_mapper {
 template <std::size_t N, class... Args>
 class ConstMapper {
+  using Tuple = std::tuple<Args...>;
+
   template <std::size_t N_value>
-  using Type = typename std::tuple_element<N_value, std::tuple<Args...> >::type;
+  using Type = typename std::tuple_element<N_value, Tuple>::type;
 
  public:
-  explicit constexpr ConstMapper(std::array<std::tuple<Args...>, N> list)
-      : map_data_(list) {}
+  explicit constexpr ConstMapper(std::array<Tuple, N> list) : map_data_(list) {}
+
+  template <std::size_t i_to, std::size_t i_from>
+  constexpr Type<i_to> to(const Type<i_from> &key) const {
+    for (const auto &tuple : map_data_) {
+      if (std::get<i_from>(tuple) == key) {
+        return std::get<i_to>(tuple);
+      }
+    }
+    throw std::out_of_range("key not found.");
+  }
 
   template <class To, class From>
   constexpr To to(const From &key) const {
-    for (const auto &tuple : map_data_) {
-      if (std::get<From>(tuple) == key) {
-        return std::get<To>(tuple);
-      }
-    }
-    throw std::out_of_range("key not found.");
-  }
-
-  template <std::size_t n_to, std::size_t n_from>
-  constexpr Type<n_to> to(const Type<n_from> &key) const {
-    for (const auto &tuple : map_data_) {
-      if (std::get<n_from>(tuple) == key) {
-        return std::get<n_to>(tuple);
-      }
-    }
-    throw std::out_of_range("key not found.");
+    constexpr auto i_to = tuple_index_v<To, Tuple>;
+    constexpr auto i_from = tuple_index_v<From, Tuple>;
+    return to<i_to, i_from>(key);
   }
 
  private:
-  std::array<std::tuple<Args...>, N> map_data_;
+  std::array<Tuple, N> map_data_;
 };
 }  // namespace const_mapper
