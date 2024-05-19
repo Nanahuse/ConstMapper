@@ -23,10 +23,15 @@
  */
 
 #include <array>
+#include <optional>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
 
+namespace const_mapper {
+template <class T>
+struct Anyable;
+}
 namespace {
 // template magic for get index of tuple types
 template <class T, class Tuple>
@@ -34,6 +39,11 @@ struct tuple_index;
 
 template <class T, class... Types>
 struct tuple_index<T, std::tuple<T, Types...>> {
+  static constexpr std::size_t value = 0;
+};
+
+template <class T, class... Types>
+struct tuple_index<const_mapper::Anyable<T>, std::tuple<T, Types...>> {
   static constexpr std::size_t value = 0;
 };
 
@@ -48,6 +58,24 @@ inline constexpr auto tuple_index_v = tuple_index<T, Types...>::value;
 }  // namespace
 
 namespace const_mapper {
+template <class T>
+struct Anyable {
+  using type = T;
+
+  constexpr Anyable(){};
+  constexpr Anyable(T value) : value(value) {}
+
+  constexpr bool operator==(const Anyable<T> &rhs) const {
+    return (value && rhs.value) ? (value == rhs.value) : true;
+  }
+
+  constexpr bool operator==(const T &rhs) const {
+    return (value) ? (value == rhs) : true;
+  }
+
+  std::optional<T> value;
+};
+
 template <std::size_t N, class... Args>
 class ConstMapper {
   using Tuple = std::tuple<Args...>;
