@@ -29,23 +29,22 @@
 
 namespace {
 // template magic for get index of tuple types
-template <typename T, typename Tuple>
+template <class T, class Tuple>
 struct tuple_index;
 
-template <typename T, typename... Types>
+template <class T, class... Types>
 struct tuple_index<T, std::tuple<T, Types...>> {
   static constexpr std::size_t value = 0;
 };
 
-template <typename T, typename U, typename... Types>
+template <class T, class U, class... Types>
 struct tuple_index<T, std::tuple<U, Types...>> {
   static constexpr std::size_t value =
       1 + tuple_index<T, std::tuple<Types...>>::value;
 };
 
-template <typename T, typename... Types>
+template <class T, class... Types>
 inline constexpr auto tuple_index_v = tuple_index<T, Types...>::value;
-
 }  // namespace
 
 namespace const_mapper {
@@ -59,8 +58,8 @@ class ConstMapper {
  public:
   explicit constexpr ConstMapper(std::array<Tuple, N> list) : map_data_(list) {}
 
-  template <std::size_t i_to, std::size_t i_from>
-  constexpr Type<i_to> to(const Type<i_from> &key) const {
+  template <std::size_t i_to, std::size_t i_from, class Key = Type<i_from>>
+  constexpr Type<i_to> to(const Key &key) const {
     for (const auto &tuple : map_data_) {
       if (std::get<i_from>(tuple) == key) {
         return std::get<i_to>(tuple);
@@ -69,8 +68,8 @@ class ConstMapper {
     throw std::out_of_range("key not found.");
   }
 
-  template <class To, class From>
-  constexpr To to(const From &key) const {
+  template <class To, class From, class Key = From>
+  constexpr To to(const Key &key) const {
     constexpr auto i_to = tuple_index_v<To, Tuple>;
     constexpr auto i_from = tuple_index_v<From, Tuple>;
     return to<i_to, i_from>(key);
