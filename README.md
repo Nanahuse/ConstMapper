@@ -4,7 +4,7 @@
 
 ## Features
 
-- **Only depends STL**: not need to add extra library.
+- **Only depends on STL**: no need to add any extra libraries.
 - **Static Definition**: Enables compile-time definition of constant mappings, ensuring high efficiency and reduced runtime overhead.
 - **Bi-Directional Conversion**: Supports conversions in both directions between any defined pairs, making it a highly flexible solution.
 - **Support C++17 or later** 
