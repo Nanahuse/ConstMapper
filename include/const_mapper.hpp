@@ -33,28 +33,21 @@ template <class T>
 struct Anyable;
 }
 namespace {
-// template magic for get index of tuple types
-template <class T, class Tuple>
-struct tuple_index;
 
-template <class T, class... Types>
-struct tuple_index<T, std::tuple<T, Types...>> {
-  static constexpr std::size_t value = 0;
-};
+template <class Tuple, class T, std::size_t index = 0>
+inline constexpr std::size_t tuple_index() {
+  static_assert(index != std::tuple_size_v<Tuple>, "Tuple does not contain T.");
 
-template <class T, class... Types>
-struct tuple_index<const_mapper::Anyable<T>, std::tuple<T, Types...>> {
-  static constexpr std::size_t value = 0;
-};
+  if constexpr (std::is_same_v<T, std::tuple_element_t<index, Tuple>>) {
+    return index;
+  } else {
+    return tuple_index<Tuple, T, index + 1>();
+  }
+}
 
-template <class T, class U, class... Types>
-struct tuple_index<T, std::tuple<U, Types...>> {
-  static constexpr std::size_t value =
-      1 + tuple_index<T, std::tuple<Types...>>::value;
-};
+template <class Tuple, class T>
+inline constexpr auto tuple_index_v = tuple_index<Tuple, T>();
 
-template <class T, class... Types>
-inline constexpr auto tuple_index_v = tuple_index<T, Types...>::value;
 }  // namespace
 
 namespace const_mapper {

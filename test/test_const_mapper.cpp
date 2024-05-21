@@ -2,6 +2,19 @@
 
 #include "const_mapper.hpp"
 
+TEST(TestConstMapper, tuple_index) {
+  using tuple = std::tuple<std::string_view, int, std::uint8_t>;
+
+  constexpr auto str_index = tuple_index_v<tuple, std::string_view>;
+  constexpr auto int_index = tuple_index_v<tuple, int>;
+  constexpr auto uint_index = tuple_index_v<tuple, std::uint8_t>;
+  // constexpr auto uint_index = tuple_index_v<tuple, std::uint16_t>;  // fail.
+
+  static_assert(str_index == 0);
+  static_assert(int_index == 1);
+  static_assert(uint_index == 2);
+}
+
 TEST(TestConstMapper, to_index) {
   constexpr auto map =
       const_mapper::ConstMapper<4, std::string_view, int, std::uint8_t>{
