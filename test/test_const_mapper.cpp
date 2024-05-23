@@ -17,6 +17,13 @@ TEST(TestConstMapper, tuple_index) {
   static_assert(uint_index == 2);
 }
 
+TEST(TestConstMapper, un_tuple) {
+  constexpr auto tmp0 = un_tuple_if_one(std::tuple(10));
+  EXPECT_EQ(tmp0, 10);
+  constexpr auto tmp1 = un_tuple_if_one(std::tuple(10, 20));
+  EXPECT_EQ(tmp1, std::tuple(10, 20));
+}
+
 TEST(TestConstMapper, to_index) {
   constexpr auto map = ConstMapper<4, std::string_view, int, std::uint8_t>{{{
       {"value_0", 0, 0},
@@ -137,6 +144,11 @@ TEST(TestConstMapper, pattern_tuple) {
     constexpr auto value_str = map.pattern_match(std::tuple<Result, int, std::uint8_t>({}, -1, 2));
     constexpr auto expected = "value_any";
     EXPECT_EQ(value_str, expected);
+  }
+  {
+    constexpr auto value = map.pattern_match(std::tuple<Result, Result, std::uint8_t>({}, {}, 2));
+    constexpr auto expected = std::tuple<std::string_view, Anyable<int>>("value_2", -2);
+    EXPECT_EQ(value, expected);
   }
 }
 

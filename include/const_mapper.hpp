@@ -56,6 +56,16 @@ inline constexpr std::size_t tuple_index() {
   return index;
 }
 
+template <class T>
+constexpr auto un_tuple_if_one(const std::tuple<T> &tuple) {
+  return std::get<0>(tuple);
+}
+
+template <class... Args>
+constexpr auto un_tuple_if_one(const std::tuple<Args...> &tuple) {
+  return tuple;
+}
+
 }  // namespace
 
 namespace const_mapper {
@@ -83,6 +93,7 @@ class Anyable {
   constexpr bool operator==(const T &rhs) const { return (value_) ? (value_ == rhs) : true; }
 
   const std::optional<T> value() const { return value_; }
+  operator std::optional<T>() const { return value_; }
 
  private:
   std::optional<T> value_;
@@ -191,20 +202,35 @@ class ConstMapper {
   constexpr auto pattern_match(const std::tuple<Keys...> &key) const {
     static_assert(tuple_size == sizeof...(Keys), "tuple size dose not match.");
     static_assert(tuple_contains<std::tuple<Keys...>, Result>(), "Result is not setted.");
-    constexpr auto result_index = tuple_index_v<std::tuple<Keys...>, Result>;
-    using TResult = Type<result_index>;
-    return pattern_match_impl<TResult, result_index>(key);
+    return pattern_match_impl(key);
   }
 
-  template <class To, std::size_t index, class... Keys>
-  constexpr To pattern_match_impl(const std::tuple<Keys...> &key) const {
+  template <class... Keys>
+  constexpr auto pattern_match_impl(const std::tuple<Keys...> &key) const {
     for (const auto &tuple : map_data_) {
       if (check_match<0>(tuple, key)) {
-        return std::get<index>(tuple);
+        return un_tuple_if_one(get_all_result<std::tuple<Keys...>>(tuple));
       }
     }
-
     throw std::out_of_range("key not found.");
+  }
+
+  template <class KeyTuple>
+  constexpr auto get_all_result(const Tuple &value_tuple) const {
+    constexpr auto i = tuple_index<KeyTuple, Result>();
+
+    return get_all_result<i, KeyTuple>(value_tuple);
+  }
+
+  template <std::size_t index, class KeyTuple>
+  constexpr auto get_all_result(const Tuple &value_tuple) const {
+    constexpr auto i = tuple_index<KeyTuple, Result, index + 1>();
+
+    if constexpr (i == tuple_size) {
+      return std::tuple(std::get<index>(value_tuple));
+    } else {
+      return std::tuple_cat(std::tuple(std::get<index>(value_tuple)), get_all_result<i, KeyTuple>(value_tuple));
+    }
   }
 
  private:
