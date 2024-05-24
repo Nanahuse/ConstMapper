@@ -27,7 +27,6 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
-#include <typeinfo>
 
 namespace {
 /**
@@ -205,34 +204,6 @@ class ConstMapper {
     return pattern_match_impl(key);
   }
 
-  template <class... Keys>
-  constexpr auto pattern_match_impl(const std::tuple<Keys...> &key) const {
-    for (const auto &tuple : map_data_) {
-      if (check_match<0>(tuple, key)) {
-        return un_tuple_if_one(get_all_result<std::tuple<Keys...>>(tuple));
-      }
-    }
-    throw std::out_of_range("key not found.");
-  }
-
-  template <class KeyTuple>
-  constexpr auto get_all_result(const Tuple &value_tuple) const {
-    constexpr auto i = tuple_index<KeyTuple, Result>();
-
-    return get_all_result<i, KeyTuple>(value_tuple);
-  }
-
-  template <std::size_t index, class KeyTuple>
-  constexpr auto get_all_result(const Tuple &value_tuple) const {
-    constexpr auto i = tuple_index<KeyTuple, Result, index + 1>();
-
-    if constexpr (i == tuple_size) {
-      return std::tuple(std::get<index>(value_tuple));
-    } else {
-      return std::tuple_cat(std::tuple(std::get<index>(value_tuple)), get_all_result<i, KeyTuple>(value_tuple));
-    }
-  }
-
  private:
   std::array<Tuple, N> map_data_;
 
@@ -268,6 +239,34 @@ class ConstMapper {
   template <class T>
   static constexpr bool compare([[maybe_unused]] const T &t0, [[maybe_unused]] const Ignore &t1) {
     return true;
+  }
+
+  template <class... Keys>
+  constexpr auto pattern_match_impl(const std::tuple<Keys...> &key) const {
+    for (const auto &tuple : map_data_) {
+      if (check_match<0>(tuple, key)) {
+        return un_tuple_if_one(get_all_result<std::tuple<Keys...>>(tuple));
+      }
+    }
+    throw std::out_of_range("key not found.");
+  }
+
+  template <class KeyTuple>
+  constexpr auto get_all_result(const Tuple &value_tuple) const {
+    constexpr auto i = tuple_index<KeyTuple, Result>();
+
+    return get_all_result<i, KeyTuple>(value_tuple);
+  }
+
+  template <std::size_t index, class KeyTuple>
+  constexpr auto get_all_result(const Tuple &value_tuple) const {
+    constexpr auto i = tuple_index<KeyTuple, Result, index + 1>();
+
+    if constexpr (i == tuple_size) {
+      return std::tuple(std::get<index>(value_tuple));
+    } else {
+      return std::tuple_cat(std::tuple(std::get<index>(value_tuple)), get_all_result<i, KeyTuple>(value_tuple));
+    }
   }
 };
 }  // namespace const_mapper

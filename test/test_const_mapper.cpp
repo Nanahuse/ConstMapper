@@ -15,6 +15,7 @@ TEST(TestConstMapper, tuple_index) {
   static_assert(str_index == 0);
   static_assert(int_index == 1);
   static_assert(uint_index == 2);
+  std::cout << "Test output" << std::endl;
 }
 
 TEST(TestConstMapper, un_tuple) {
@@ -215,9 +216,4 @@ TEST(TestConstMapper, range) {
     constexpr auto expected = "larger 5";
     EXPECT_EQ(value_str, expected);
   }
-}
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

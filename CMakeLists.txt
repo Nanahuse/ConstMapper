@@ -16,7 +16,11 @@ include_directories(${PROJECT_NAME}
     ${GTEST_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME} test/test_const_mapper.cpp)
+add_executable(${PROJECT_NAME}
+  test/main.cpp 
+  test/test_const_mapper.cpp
+  test/test_performance.cpp
+  )
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 target_link_libraries(${PROJECT_NAME} ${GTEST_LIBRARIES})
