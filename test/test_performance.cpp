@@ -4,7 +4,7 @@
 
 using namespace const_mapper;
 
-TEST(Performance, std_unordered_map) {
+TEST(Performance, ref_std_unordered_map) {
   const auto map = std::unordered_map<std::uint8_t, int>{
       {0, 0}, {1, -1}, {2, -2}, {3, -3}, {4, -4}, {5, -5}, {6, -6}, {7, -7}, {8, -8}, {9, -9},
   };
@@ -18,7 +18,7 @@ TEST(Performance, std_unordered_map) {
   }
 }
 
-TEST(Performance, std_map) {
+TEST(Performance, ref_std_map) {
   const auto map = std::map<std::uint8_t, int>{
       {0, 0}, {1, -1}, {2, -2}, {3, -3}, {4, -4}, {5, -5}, {6, -6}, {7, -7}, {8, -8}, {9, -9},
   };

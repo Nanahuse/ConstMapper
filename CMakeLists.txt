@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(const_mapper CXX)
+project(const_mapper_tests CXX)
 
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")

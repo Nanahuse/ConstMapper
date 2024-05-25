@@ -19,9 +19,9 @@ TEST(TestConstMapper, tuple_index) {
 }
 
 TEST(TestConstMapper, un_tuple) {
-  constexpr auto tmp0 = un_tuple_if_one(std::tuple(10));
+  constexpr auto tmp0 = un_tuple_if_one_element(std::tuple(10));
   EXPECT_EQ(tmp0, 10);
-  constexpr auto tmp1 = un_tuple_if_one(std::tuple(10, 20));
+  constexpr auto tmp1 = un_tuple_if_one_element(std::tuple(10, 20));
   EXPECT_EQ(tmp1, std::tuple(10, 20));
 }
 

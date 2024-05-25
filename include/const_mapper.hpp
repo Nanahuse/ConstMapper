@@ -28,6 +28,56 @@
 #include <tuple>
 #include <type_traits>
 
+namespace const_mapper {
+
+enum class CompareType {
+  Any,
+  LargerThan,
+  LargerEqual,
+  Equal,
+  LessEqual,
+  LessThan,
+};
+
+class Result {};
+
+class Ignore {};
+
+template <class T>
+class Anyable {
+ public:
+  using type = T;
+
+  constexpr Anyable();
+  constexpr Anyable(T value);
+
+  constexpr bool operator==(const Anyable<T> &rhs) const;
+  constexpr bool operator==(const T &rhs) const;
+
+  constexpr std::optional<T> value() const;
+  constexpr operator std::optional<T>() const;
+
+ private:
+  std::optional<T> value_;
+};
+
+template <class T>
+class Range {
+ public:
+  using type = T;
+
+  constexpr Range();
+  constexpr Range(CompareType compare_type, T value);
+
+  constexpr bool operator==(const T &rhs) const;
+
+ private:
+  CompareType compare_type_ = CompareType::Any;
+  T value_;
+};
+
+}  // namespace const_mapper
+
 namespace {
 /**
  * タプルの要素から指定した型のインデックスを取得する。
@@ -56,12 +106,12 @@ inline constexpr std::size_t tuple_index() {
 }
 
 template <class T>
-constexpr auto un_tuple_if_one(const std::tuple<T> &tuple) {
+constexpr auto un_tuple_if_one_element(const std::tuple<T> &tuple) {
   return std::get<0>(tuple);
 }
 
 template <class... Args>
-constexpr auto un_tuple_if_one(const std::tuple<Args...> &tuple) {
+constexpr auto un_tuple_if_one_element(const std::tuple<Args...> &tuple) {
   return tuple;
 }
 
@@ -78,71 +128,57 @@ inline constexpr auto tuple_contains() {
 }
 
 template <class T>
-class Anyable {
- public:
-  using type = T;
-
-  constexpr Anyable() {}
-  constexpr Anyable(T value) : value_(value) {}
-
-  constexpr bool operator==(const Anyable<T> &rhs) const {
-    return (value_ && rhs.value_) ? (value_ == rhs.value_) : true;
-  }
-
-  constexpr bool operator==(const T &rhs) const { return (value_) ? (value_ == rhs) : true; }
-
-  const std::optional<T> value() const { return value_; }
-  operator std::optional<T>() const { return value_; }
-
- private:
-  std::optional<T> value_;
-};
-
-enum class CompareType {
-  Any,
-  LargerThan,
-  LargerEqual,
-  Equal,
-  LessEqual,
-  LessThan,
-};
+constexpr Anyable<T>::Anyable() {}
 
 template <class T>
-class Range {
- public:
-  using type = T;
+constexpr Anyable<T>::Anyable(T value) : value_(value) {}
 
-  constexpr Range() : value_(){};
-  constexpr Range(CompareType compare_type, T value) : compare_type_(compare_type), value_(value) {}
+template <class T>
+constexpr bool Anyable<T>::operator==(const Anyable<T> &rhs) const {
+  return (value_ && rhs.value_) ? (value_ == rhs.value_) : true;
+}
 
-  constexpr bool operator==(const T &rhs) const {
-    switch (compare_type_) {
-      case CompareType::LargerThan:
-        return rhs > value_;
-      case CompareType::LargerEqual:
-        return rhs >= value_;
-      case CompareType::Equal:
-        return rhs == value_;
-      case CompareType::LessEqual:
-        return rhs <= value_;
-      case CompareType::LessThan:
-        return rhs < value_;
-      case CompareType::Any:
-        return true;
+template <class T>
+constexpr bool Anyable<T>::operator==(const T &rhs) const {
+  return (value_) ? (value_ == rhs) : true;
+}
 
-      default:
-        return false;
-    }
+template <class T>
+constexpr std::optional<T> Anyable<T>::value() const {
+  return value_;
+}
+
+template <class T>
+constexpr Anyable<T>::operator std::optional<T>() const {
+  return value_;
+}
+
+template <class T>
+constexpr Range<T>::Range() : value_(){};
+
+template <class T>
+constexpr Range<T>::Range(CompareType compare_type, T value) : compare_type_(compare_type), value_(value) {}
+
+template <class T>
+constexpr bool Range<T>::operator==(const T &rhs) const {
+  switch (compare_type_) {
+    case CompareType::LargerThan:
+      return rhs > value_;
+    case CompareType::LargerEqual:
+      return rhs >= value_;
+    case CompareType::Equal:
+      return rhs == value_;
+    case CompareType::LessEqual:
+      return rhs <= value_;
+    case CompareType::LessThan:
+      return rhs < value_;
+    case CompareType::Any:
+      return true;
+
+    default:
+      throw std::logic_error("no implement error");
   }
-
- private:
-  CompareType compare_type_ = CompareType::Any;
-  T value_;
-};
-
-class Result {};
-
-class Ignore {};
+}
 
 template <std::size_t N, class... Args>
 class ConstMapper {
@@ -204,6 +240,10 @@ class ConstMapper {
     return pattern_match_impl(key);
   }
 
+  constexpr auto begin() const noexcept { return map_data_.begin(); }
+  constexpr auto end() const noexcept { return map_data_.end(); }
+  constexpr auto size() const noexcept { return map_data_.size(); }
+
  private:
   std::array<Tuple, N> map_data_;
 
@@ -245,7 +285,7 @@ class ConstMapper {
   constexpr auto pattern_match_impl(const std::tuple<Keys...> &key) const {
     for (const auto &tuple : map_data_) {
       if (check_match<0>(tuple, key)) {
-        return un_tuple_if_one(get_all_result<std::tuple<Keys...>>(tuple));
+        return un_tuple_if_one_element(get_all_result<std::tuple<Keys...>>(tuple));
       }
     }
     throw std::out_of_range("key not found.");
