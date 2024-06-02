@@ -7,9 +7,9 @@ using namespace const_mapper;
 TEST(TestConstMapper, tuple_index) {
   using tuple = std::tuple<std::string_view, int, std::uint8_t>;
 
-  constexpr auto str_index = tuple_index_v<tuple, std::string_view>;
-  constexpr auto int_index = tuple_index_v<tuple, int>;
-  constexpr auto uint_index = tuple_index_v<tuple, std::uint8_t>;
+  constexpr auto str_index = tuple_index<tuple, std::string_view>();
+  constexpr auto int_index = tuple_index<tuple, int>();
+  constexpr auto uint_index = tuple_index<tuple, std::uint8_t>();
   // constexpr auto uint_index = tuple_index_v<tuple, std::uint16_t>;  // must fail.
 
   static_assert(str_index == 0);
@@ -86,32 +86,6 @@ TEST(TestConstMapper, to_type) {
 }
 
 TEST(TestConstMapper, pattern) {
-  constexpr auto map = ConstMapper<4, std::string_view, int, std::uint8_t>{{{
-      {"value_0", 0, 0},
-      {"value_1", -1, 1},
-      {"value_2", -2, 2},
-      {"value_3", -3, 3},
-  }}};
-
-  for (auto i = 0; i < 4; ++i) {
-    auto string = "value_" + std::to_string(i);
-
-    auto value_str = map.pattern_to<std::string_view, int, std::uint8_t>(-i, i);
-
-    EXPECT_EQ(value_str, string);
-  }
-
-  try {
-    map.pattern_to<std::string_view, int, std::uint8_t>(-1, 0);
-    EXPECT_TRUE(false);
-  } catch (const std::out_of_range &e) {
-    // expected here
-  } catch (const std::exception &e) {
-    EXPECT_TRUE(false);
-  }
-}
-
-TEST(TestConstMapper, pattern_tuple) {
   constexpr auto map = ConstMapper<6, std::string_view, Anyable<int>, Anyable<std::uint8_t>>{{{
       {"value_0", 0, 0},
       {"value_1", -1, 1},

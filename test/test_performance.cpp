@@ -60,7 +60,7 @@ TEST(Performance, const_mapper_to) {
   }
 }
 
-TEST(Performance, const_mapper_pattern_same_as_to) {
+TEST(Performance, const_mapper_pattern_match) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution distrib(0, 9);
@@ -77,7 +77,7 @@ TEST(Performance, const_mapper_pattern_same_as_to) {
   }
 }
 
-TEST(Performance, const_mapper_pattern_pick_2_values) {
+TEST(Performance, const_mapper_pattern_match_pick_up_2_values) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution distrib(0, 9);
