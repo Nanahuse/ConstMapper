@@ -3,7 +3,6 @@ project(const_mapper_tests CXX)
 
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_STANDARD 17)
 
 enable_testing()
@@ -20,7 +19,9 @@ add_executable(${PROJECT_NAME}
   test/main.cpp 
   test/test_const_mapper.cpp
   test/test_performance.cpp
+  test/test_utils.cpp
+  test/test_example.cpp
   )
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(${PROJECT_NAME} PRIVATE -O0 -Wall -Wextra -Wpedantic -Werror)
 
 target_link_libraries(${PROJECT_NAME} ${GTEST_LIBRARIES})
