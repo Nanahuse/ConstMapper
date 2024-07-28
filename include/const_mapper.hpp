@@ -140,8 +140,6 @@ class ConstMapper {
    */
   template <std::size_t index, class PatternTuple>
   constexpr auto get_result_impl(const Tuple &value_tuple) const;
-
-  static constexpr auto tuple_size();
 };
 
 template <class T>
@@ -283,11 +281,6 @@ constexpr bool Range<T>::operator==(const T &rhs) const {
 }
 
 template <std::size_t N, class... Args>
-constexpr auto ConstMapper<N, Args...>::tuple_size() {
-  return std::tuple_size_v<Tuple>;
-}
-
-template <std::size_t N, class... Args>
 constexpr ConstMapper<N, Args...>::ConstMapper(std::array<Tuple, N> list) : map_data_(list) {
   static_assert(N > 1, "N must grater than 1.");
 }
@@ -295,18 +288,15 @@ constexpr ConstMapper<N, Args...>::ConstMapper(std::array<Tuple, N> list) : map_
 template <std::size_t N, class... Args>
 template <std::size_t i_to, std::size_t i_from, class Key>
 constexpr auto ConstMapper<N, Args...>::to(const Key &key) const {
-  if constexpr (!(i_to < tuple_size())) {
-    static_assert(false, "i_to out of tuple range");
-  } else if constexpr (!(i_from < tuple_size())) {
-    static_assert(false, "i_from out of tuple range");
-  } else {
-    for (const auto &tuple : map_data_) {
-      if (std::get<i_from>(tuple) == key) {
-        return std::get<i_to>(tuple);
-      }
+  static_assert(i_to < std::tuple_size_v<Tuple>, "i_to out of tuple range");
+  static_assert(i_from < std::tuple_size_v<Tuple>, "i_from out of tuple range");
+
+  for (const auto &tuple : map_data_) {
+    if (std::get<i_from>(tuple) == key) {
+      return std::get<i_to>(tuple);
     }
-    throw std::out_of_range("key not found.");
   }
+  throw std::out_of_range("key not found.");
 }
 
 template <std::size_t N, class... Args>
@@ -315,20 +305,15 @@ constexpr To ConstMapper<N, Args...>::to(const Key &key) const {
   constexpr auto i_to = tuple_index<Tuple, To, 0>();
   constexpr auto i_from = tuple_index<Tuple, From, 0>();
 
-  if constexpr (!(i_to < tuple_size())) {
-    static_assert(false, "Tuple does not contain `To` element.");
-  } else if constexpr (!(i_from < tuple_size())) {
-    static_assert(false, "Tuple does not contain `From` element.");
-  } else {
-    return to<i_to, i_from>(key);
-  }
+  return to<i_to, i_from>(key);
 }
 
 template <std::size_t N, class... Args>
 template <class... Types>
 constexpr auto ConstMapper<N, Args...>::pattern_match(const std::tuple<Types...> &pattern) const {
-  static_assert(tuple_size() == sizeof...(Types), "tuple size dose not match.");
+  static_assert(std::tuple_size_v<Tuple> == sizeof...(Types), "tuple size dose not match.");
   static_assert(tuple_contains<std::tuple<Types...>, Result>(), "No Result value.");
+
   return pattern_match_impl(pattern);
 }
 
@@ -347,7 +332,7 @@ template <std::size_t N, class... Args>
 template <std::size_t index, class PatternTuple>
 constexpr bool ConstMapper<N, Args...>::check_pattern_match(const Tuple &tuple,
                                                             const PatternTuple &pattern_tuple) const {
-  if constexpr (index + 1 == tuple_size()) {
+  if constexpr (index + 1 == std::tuple_size_v<Tuple>) {
     return compare(std::get<index>(tuple), std::get<index>(pattern_tuple));
   } else {
     return compare(std::get<index>(tuple), std::get<index>(pattern_tuple)) &&
@@ -386,7 +371,7 @@ template <std::size_t index, class PatternTuple>
 constexpr auto ConstMapper<N, Args...>::get_result_impl(const Tuple &value_tuple) const {
   constexpr auto i = tuple_index<PatternTuple, Result, index + 1>();
 
-  if constexpr (i == tuple_size()) {
+  if constexpr (i == std::tuple_size_v<Tuple>) {
     return std::tuple(std::get<index>(value_tuple));
   } else {
     return std::tuple_cat(std::tuple(std::get<index>(value_tuple)), get_result_impl<i, PatternTuple>(value_tuple));
